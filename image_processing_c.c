@@ -55,9 +55,13 @@ PPMImage * convertToPPPMImage(AccurateImage *imageIn) {
 void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 	
 	// Iterate over each pixel
-	for(int senterX = 0; senterX < imageIn->x; senterX++) {
+	for(int senterY = 0; senterY < imageIn->y; senterY++) {
+	
+		for(int senterX = 0; senterX < imageIn->x; senterX++) {
 
-		for(int senterY = 0; senterY < imageIn->y; senterY++) {
+
+			// reduce unneccessary references
+			int numberOfValuesInEachRow = imageIn->x; // R, G and B
 
 			// For each pixel we compute the magic number
 
@@ -67,44 +71,40 @@ void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 			double sumBlue = 0;
 
 			int countIncluded = 0;
-			for(int x = -size; x <= size; x++) {
+			for(int y = -size; y <= size; y++) {
+				int currentY = senterY + y;
+				
+				// Check if we are outside the bounds
+				if(currentY < 0 || currentY >= imageIn->y)
+					continue;
 
-				for(int y = -size; y <= size; y++) {
+				for(int x = -size; x <= size; x++) {
 					int currentX = senterX + x;
-					int currentY = senterY + y;
 
-					// Check if we are outside the bounds
-					if(currentX < 0)
-						continue;
-					if(currentX >= imageIn->x)
-						continue;
-					if(currentY < 0)
-						continue;
-					if(currentY >= imageIn->y)
+					if(currentX < 0 || currentX >= imageIn->x)
 						continue;
 
 					// Now we can begin
-					int numberOfValuesInEachRow = imageIn->x;
+					//int numberOfValuesInEachRow = imageIn->x;
 					int offsetOfThePixel = (numberOfValuesInEachRow * currentY + currentX);
 
 					sumRed += imageIn->data[offsetOfThePixel].red;
 					sumGreen += imageIn->data[offsetOfThePixel].green;
 					sumBlue += imageIn->data[offsetOfThePixel].blue;
-
+					
 					// Keep track of how many values we have included
 					countIncluded++;
 				}
-
+				
 			}
-
+			
 			// Now we compute the final value
 			double valueRed = sumRed / countIncluded;
 			double valueGreen = sumGreen / countIncluded;
 			double valueBlue = sumBlue / countIncluded;
-
-
+			
+			
 			// Update the output image
-			int numberOfValuesInEachRow = imageOut->x; // R, G and B
 			int offsetOfThePixel = (numberOfValuesInEachRow * senterY + senterX);
 			imageOut->data[offsetOfThePixel].red = valueRed;
 			imageOut->data[offsetOfThePixel].green = valueGreen;
