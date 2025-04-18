@@ -52,7 +52,7 @@ PPMImage * convertToPPPMImage(AccurateImage *imageIn) {
 }
 
 // blur one color channel
-void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourType, int size) {
+void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 	
 	// Iterate over each pixel
 	for(int senterX = 0; senterX < imageIn->x; senterX++) {
@@ -60,7 +60,12 @@ void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourTy
 		for(int senterY = 0; senterY < imageIn->y; senterY++) {
 
 			// For each pixel we compute the magic number
-			double sum = 0;
+
+			// added sum for each colour
+			double sumRed = 0;
+			double sumGreen = 0;
+			double sumBlue = 0;
+
 			int countIncluded = 0;
 			for(int x = -size; x <= size; x++) {
 
@@ -81,12 +86,10 @@ void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourTy
 					// Now we can begin
 					int numberOfValuesInEachRow = imageIn->x;
 					int offsetOfThePixel = (numberOfValuesInEachRow * currentY + currentX);
-					if(colourType == 0)
-						sum += imageIn->data[offsetOfThePixel].red;
-					if(colourType == 1)
-						sum += imageIn->data[offsetOfThePixel].green;
-					if(colourType == 2)
-						sum += imageIn->data[offsetOfThePixel].blue;
+
+					sumRed += imageIn->data[offsetOfThePixel].red;
+					sumGreen += imageIn->data[offsetOfThePixel].green;
+					sumBlue += imageIn->data[offsetOfThePixel].blue;
 
 					// Keep track of how many values we have included
 					countIncluded++;
@@ -95,18 +98,17 @@ void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int colourTy
 			}
 
 			// Now we compute the final value
-			double value = sum / countIncluded;
+			double valueRed = sumRed / countIncluded;
+			double valueGreen = sumGreen / countIncluded;
+			double valueBlue = sumBlue / countIncluded;
 
 
 			// Update the output image
 			int numberOfValuesInEachRow = imageOut->x; // R, G and B
 			int offsetOfThePixel = (numberOfValuesInEachRow * senterY + senterX);
-			if(colourType == 0)
-				imageOut->data[offsetOfThePixel].red = value;
-			if(colourType == 1)
-				imageOut->data[offsetOfThePixel].green = value;
-			if(colourType == 2)
-				imageOut->data[offsetOfThePixel].blue = value;
+			imageOut->data[offsetOfThePixel].red = valueRed;
+			imageOut->data[offsetOfThePixel].green = valueGreen;
+			imageOut->data[offsetOfThePixel].blue = valueBlue;
 		}
 
 	}
@@ -190,28 +192,23 @@ int main(int argc, char** argv) {
 	AccurateImage *imageAccurate2_tiny = convertToAccurateImage(image);
 	
 	// Process the tiny case:
-	for(int colour = 0; colour < 3; colour++) {
-		int size = 2;
-        blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, colour, size);
-        blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, colour, size);
-        blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, colour, size);
-        blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, colour, size);
-        blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, colour, size);
-	}
+	// removed redundant iterations since we process all colors at the same time
+	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+	blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
+	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+	blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
+	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
 	
 	
 	AccurateImage *imageAccurate1_small = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_small = convertToAccurateImage(image);
 	
 	// Process the small case:
-	for(int colour = 0; colour < 3; colour++) {
-		int size = 3;
-        blurIteration(imageAccurate2_small, imageAccurate1_small, colour, size);
-        blurIteration(imageAccurate1_small, imageAccurate2_small, colour, size);
-        blurIteration(imageAccurate2_small, imageAccurate1_small, colour, size);
-        blurIteration(imageAccurate1_small, imageAccurate2_small, colour, size);
-        blurIteration(imageAccurate2_small, imageAccurate1_small, colour, size);
-	}
+	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+	blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
+	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+	blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
+	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
 
     // an intermediate step can be saved for debugging like this
 //    writePPM("imageAccurate2_tiny.ppm", convertToPPPMImage(imageAccurate2_tiny));
@@ -220,27 +217,22 @@ int main(int argc, char** argv) {
 	AccurateImage *imageAccurate2_medium = convertToAccurateImage(image);
 	
 	// Process the medium case:
-	for(int colour = 0; colour < 3; colour++) {
-		int size = 5;
-        blurIteration(imageAccurate2_medium, imageAccurate1_medium, colour, size);
-        blurIteration(imageAccurate1_medium, imageAccurate2_medium, colour, size);
-        blurIteration(imageAccurate2_medium, imageAccurate1_medium, colour, size);
-        blurIteration(imageAccurate1_medium, imageAccurate2_medium, colour, size);
-        blurIteration(imageAccurate2_medium, imageAccurate1_medium, colour, size);
-	}
+	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+	blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
+	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+	blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
+	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
 	
 	AccurateImage *imageAccurate1_large = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_large = convertToAccurateImage(image);
 	
 	// Do each color channel
-	for(int colour = 0; colour < 3; colour++) {
-		int size = 8;
-        blurIteration(imageAccurate2_large, imageAccurate1_large, colour, size);
-        blurIteration(imageAccurate1_large, imageAccurate2_large, colour, size);
-        blurIteration(imageAccurate2_large, imageAccurate1_large, colour, size);
-        blurIteration(imageAccurate1_large, imageAccurate2_large, colour, size);
-        blurIteration(imageAccurate2_large, imageAccurate1_large, colour, size);
-	}
+	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+	blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
+	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+	blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
+	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+
 	// calculate difference
 	PPMImage *final_tiny = imageDifference(imageAccurate2_tiny, imageAccurate2_small);
     PPMImage *final_small = imageDifference(imageAccurate2_small, imageAccurate2_medium);
