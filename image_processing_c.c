@@ -277,6 +277,8 @@ PPMImage * imageDifference(AccurateImage *imageInSmall, AccurateImage *imageInLa
 
 
 int main(int argc, char** argv) {
+	omp_set_num_threads(4);
+
     // read image
     PPMImage *image;
     // select where to read the image from
@@ -287,57 +289,89 @@ int main(int argc, char** argv) {
         // from stdin for cmb
         image = readStreamPPM(stdin);
     }
-	
-	
+
 	AccurateImage *imageAccurate1_tiny = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_tiny = convertToAccurateImage(image);
-	
-	// Process the tiny case:
-	// removed redundant iterations since we process all colors at the same time
-	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
-	blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
-	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
-	blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
-	blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
-	
-	
+
 	AccurateImage *imageAccurate1_small = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_small = convertToAccurateImage(image);
-	
-	// Process the small case:
-	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
-	blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
-	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
-	blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
-	blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
 
-    // an intermediate step can be saved for debugging like this
-//    writePPM("imageAccurate2_tiny.ppm", convertToPPPMImage(imageAccurate2_tiny));
-	
 	AccurateImage *imageAccurate1_medium = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_medium = convertToAccurateImage(image);
-	
-	// Process the medium case:
-	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
-	blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
-	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
-	blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
-	blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
-	
+
 	AccurateImage *imageAccurate1_large = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_large = convertToAccurateImage(image);
-	
-	// Do each color channel
-	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
-	blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
-	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
-	blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
-	blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
 
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{ 
+			// Process the tiny case:
+			// removed redundant iterations since we process all colors at the same time
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+		}
+
+		#pragma omp section
+		{ 			
+			// Process the small case:
+			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+			blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
+			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+			blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
+			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+		
+			// an intermediate step can be saved for debugging like this
+		//    writePPM("imageAccurate2_tiny.ppm", convertToPPPMImage(imageAccurate2_tiny));
+		}
+
+		#pragma omp section
+		{ 			
+			// Process the medium case:
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+			blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+			blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+		}
+
+		#pragma omp section
+		{ 			
+			// Do each color channel
+			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+			blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
+			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+			blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
+			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+		}
+	}
+	
 	// calculate difference
-	PPMImage *final_tiny = imageDifference(imageAccurate2_tiny, imageAccurate2_small);
-    PPMImage *final_small = imageDifference(imageAccurate2_small, imageAccurate2_medium);
-    PPMImage *final_medium = imageDifference(imageAccurate2_medium, imageAccurate2_large);
+	PPMImage *final_tiny;
+	PPMImage *final_small;
+	PPMImage *final_medium;
+
+	#pragma omp parallel sections
+	{
+		#pragma omp section
+		{ 
+			final_tiny = imageDifference(imageAccurate2_tiny, imageAccurate2_small);
+		}
+
+		#pragma omp section
+		{ 
+			final_small = imageDifference(imageAccurate2_small, imageAccurate2_medium);
+		}
+
+		#pragma omp section
+		{ 
+			final_medium = imageDifference(imageAccurate2_medium, imageAccurate2_large);
+		}
+	}
+
 	// Save the images.
     if(argc > 1) {
         writePPM("flower_tiny.ppm", final_tiny);
