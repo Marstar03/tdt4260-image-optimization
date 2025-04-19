@@ -56,6 +56,13 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 	
 	// Iterate over each pixel
 	for(int senterY = 0; senterY < imageIn->y; senterY++) {
+
+		// added sum for each colour
+		double sumRed = 0;
+		double sumGreen = 0;
+		double sumBlue = 0;
+
+		int countIncluded = 0;
 	
 		for(int senterX = 0; senterX < imageIn->x; senterX++) {
 
@@ -63,34 +70,43 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 			// reduce unneccessary references
 			int numberOfValuesInEachRow = imageIn->x; // R, G and B
 
-			// For each pixel we compute the magic number
+			if (senterX > 0) {
+				if (senterX - size - 1 >= 0) {
+					sumRed -= imageIn->data[numberOfValuesInEachRow * senterY + senterX - size - 1].red;
+					sumGreen -= imageIn->data[numberOfValuesInEachRow * senterY + senterX - size - 1].green;
+					sumBlue -= imageIn->data[numberOfValuesInEachRow * senterY + senterX - size - 1].blue;
 
-			// added sum for each colour
-			double sumRed = 0;
-			double sumGreen = 0;
-			double sumBlue = 0;
+					countIncluded--;
+				}
+				if (senterX + size < numberOfValuesInEachRow) {
+					sumRed += imageIn->data[numberOfValuesInEachRow * senterY + senterX + size].red;
+					sumGreen += imageIn->data[numberOfValuesInEachRow * senterY + senterX + size].green;
+					sumBlue += imageIn->data[numberOfValuesInEachRow * senterY + senterX + size].blue;
 
-			int countIncluded = 0;
-
-			for(int x = -size; x <= size; x++) {
-				int currentX = senterX + x;
-
-				if(currentX < 0 || currentX >= imageIn->x)
-					continue;
-
-				// Now we can begin
-				//int numberOfValuesInEachRow = imageIn->x;
-				int offsetOfThePixel = (numberOfValuesInEachRow * senterY + currentX);
-
-				sumRed += imageIn->data[offsetOfThePixel].red;
-				sumGreen += imageIn->data[offsetOfThePixel].green;
-				sumBlue += imageIn->data[offsetOfThePixel].blue;
-				
-				// Keep track of how many values we have included
-				countIncluded++;
+					countIncluded++;
+				}
+			} else {
+				// For each pixel we compute the magic number
+	
+				for(int x = -size; x <= size; x++) {
+					int currentX = senterX + x;
+	
+					if(currentX < 0 || currentX >= imageIn->x)
+						continue;
+	
+					// Now we can begin
+					//int numberOfValuesInEachRow = imageIn->x;
+					int offsetOfThePixel = (numberOfValuesInEachRow * senterY + currentX);
+	
+					sumRed += imageIn->data[offsetOfThePixel].red;
+					sumGreen += imageIn->data[offsetOfThePixel].green;
+					sumBlue += imageIn->data[offsetOfThePixel].blue;
+					
+					// Keep track of how many values we have included
+					countIncluded++;
+				}
 			}
-				
-			
+
 			// Now we compute the final value
 			double valueRed = sumRed / countIncluded;
 			double valueGreen = sumGreen / countIncluded;
@@ -112,42 +128,60 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 	
 	// Iterate over each pixel
-	for(int senterY = 0; senterY < imageIn->y; senterY++) {
+	for(int senterX = 0; senterX < imageIn->x; senterX++) {
+
+		// added sum for each colour
+		double sumRed = 0;
+		double sumGreen = 0;
+		double sumBlue = 0;
 	
-		for(int senterX = 0; senterX < imageIn->x; senterX++) {
-
-
+		int countIncluded = 0;
+		
+		for(int senterY = 0; senterY < imageIn->y; senterY++) {
+			
 			// reduce unneccessary references
 			int numberOfValuesInEachRow = imageIn->x; // R, G and B
 
-			// For each pixel we compute the magic number
+			if (senterY > 0) {
+				if (senterY - size - 1 >= 0) {
+					sumRed -= imageIn->data[numberOfValuesInEachRow * (senterY - size - 1) + senterX].red;
+					sumGreen -= imageIn->data[numberOfValuesInEachRow * (senterY - size - 1) + senterX].green;
+					sumBlue -= imageIn->data[numberOfValuesInEachRow * (senterY - size - 1) + senterX].blue;
 
-			// added sum for each colour
-			double sumRed = 0;
-			double sumGreen = 0;
-			double sumBlue = 0;
+					countIncluded--;
+				}
+				if (senterY + size < imageIn->y) {
+					sumRed += imageIn->data[numberOfValuesInEachRow * (senterY + size) + senterX].red;
+					sumGreen += imageIn->data[numberOfValuesInEachRow * (senterY + size) + senterX].green;
+					sumBlue += imageIn->data[numberOfValuesInEachRow * (senterY + size) + senterX].blue;
 
-			int countIncluded = 0;
-			for(int y = -size; y <= size; y++) {
-				int currentY = senterY + y;
-				
-				// Check if we are outside the bounds
-				if(currentY < 0 || currentY >= imageIn->y)
-					continue;
+					countIncluded++;
+				}
+			} else {
+				// For each pixel we compute the magic number
 
-				// Now we can begin
-				//int numberOfValuesInEachRow = imageIn->x;
-				int offsetOfThePixel = (numberOfValuesInEachRow * currentY + senterX);
+				for(int y = -size; y <= size; y++) {
+					int currentY = senterY + y;
+					
+					// Check if we are outside the bounds
+					if(currentY < 0 || currentY >= imageIn->y)
+						continue;
+	
+					// Now we can begin
+					//int numberOfValuesInEachRow = imageIn->x;
+					int offsetOfThePixel = (numberOfValuesInEachRow * currentY + senterX);
+	
+					sumRed += imageIn->data[offsetOfThePixel].red;
+					sumGreen += imageIn->data[offsetOfThePixel].green;
+					sumBlue += imageIn->data[offsetOfThePixel].blue;
+					
+					// Keep track of how many values we have included
+					countIncluded++;
+					
+				}
 
-				sumRed += imageIn->data[offsetOfThePixel].red;
-				sumGreen += imageIn->data[offsetOfThePixel].green;
-				sumBlue += imageIn->data[offsetOfThePixel].blue;
-				
-				// Keep track of how many values we have included
-				countIncluded++;
-				
 			}
-			
+
 			// Now we compute the final value
 			double valueRed = sumRed / countIncluded;
 			double valueGreen = sumGreen / countIncluded;
