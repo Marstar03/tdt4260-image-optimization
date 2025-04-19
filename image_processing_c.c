@@ -170,15 +170,16 @@ void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 
 	AccurateImage *imageTemp;
     imageTemp = (AccurateImage *)malloc(sizeof(AccurateImage));
-    imageTemp->data = (AccuratePixel*)malloc(imageTemp->x * imageTemp->y * sizeof(AccuratePixel));
 
     imageTemp->x = imageIn->x;
     imageTemp->y = imageIn->y;
+    imageTemp->data = (AccuratePixel*)malloc(imageTemp->x * imageTemp->y * sizeof(AccuratePixel));
 	
 	blurIterationHorizontal(imageTemp, imageIn, size);
-
 	blurIterationVertical(imageOut, imageTemp, size);
-	
+
+	free(imageTemp->data);
+	free(imageTemp);
 }
 
 
@@ -313,6 +314,33 @@ int main(int argc, char** argv) {
         writeStreamPPM(stdout, final_small);
         writeStreamPPM(stdout, final_medium);
     }
+
+	free(imageAccurate1_tiny->data);
+	free(imageAccurate1_tiny);
+	free(imageAccurate2_tiny->data);
+	free(imageAccurate2_tiny);
+	free(imageAccurate1_small->data);
+	free(imageAccurate1_small);
+	free(imageAccurate2_small->data);
+	free(imageAccurate2_small);
+	free(imageAccurate1_medium->data);
+	free(imageAccurate1_medium);
+	free(imageAccurate2_medium->data);
+	free(imageAccurate2_medium);
+	free(imageAccurate1_large->data);
+	free(imageAccurate1_large);
+	free(imageAccurate2_large->data);
+	free(imageAccurate2_large);
+
+	free(final_tiny->data);
+	free(final_tiny);
+	free(final_small->data);
+	free(final_small);
+	free(final_medium->data);
+	free(final_medium);
+
+	free(image->data);
+	free(image);
 	
 }
 
