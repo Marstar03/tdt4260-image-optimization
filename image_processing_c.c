@@ -54,6 +54,9 @@ PPMImage * convertToPPPMImage(AccurateImage *imageIn) {
 // blur horizontally
 void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
 	
+	// reduce unneccessary references
+	int numberOfValuesInEachRow = imageIn->x; // R, G and B
+
 	// Iterate over each pixel
 	for(int senterY = 0; senterY < imageIn->y; senterY++) {
 
@@ -65,10 +68,6 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 		int countIncluded = 0;
 	
 		for(int senterX = 0; senterX < imageIn->x; senterX++) {
-
-
-			// reduce unneccessary references
-			int numberOfValuesInEachRow = imageIn->x; // R, G and B
 
 			if (senterX > 0) {
 				if (senterX - size - 1 >= 0) {
@@ -126,6 +125,9 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 
 // blur vertically
 void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
+
+	// reduce unneccessary references
+	int numberOfValuesInEachRow = imageIn->x; // R, G and B
 	
 	// Iterate over each pixel
 	for(int senterX = 0; senterX < imageIn->x; senterX++) {
@@ -139,9 +141,6 @@ void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int 
 		
 		for(int senterY = 0; senterY < imageIn->y; senterY++) {
 			
-			// reduce unneccessary references
-			int numberOfValuesInEachRow = imageIn->x; // R, G and B
-
 			if (senterY > 0) {
 				if (senterY - size - 1 >= 0) {
 					sumRed -= imageIn->data[numberOfValuesInEachRow * (senterY - size - 1) + senterX].red;
@@ -200,20 +199,13 @@ void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int 
 }
 
 // blur one color channel
-void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size) {
-
-	AccurateImage *imageTemp;
-    imageTemp = (AccurateImage *)malloc(sizeof(AccurateImage));
+void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, AccurateImage *imageTemp, int size) {
 
     imageTemp->x = imageIn->x;
     imageTemp->y = imageIn->y;
-    imageTemp->data = (AccuratePixel*)malloc(imageTemp->x * imageTemp->y * sizeof(AccuratePixel));
-	
+
 	blurIterationHorizontal(imageTemp, imageIn, size);
 	blurIterationVertical(imageOut, imageTemp, size);
-
-	free(imageTemp->data);
-	free(imageTemp);
 }
 
 
@@ -290,62 +282,105 @@ int main(int argc, char** argv) {
         image = readStreamPPM(stdin);
     }
 
-	AccurateImage *imageAccurate1_tiny = convertToAccurateImage(image);
-	AccurateImage *imageAccurate2_tiny = convertToAccurateImage(image);
+	AccurateImage *imageAccurate1_tiny;
+	AccurateImage *imageAccurate2_tiny;
+	
+	AccurateImage *imageAccurate1_small;
+	AccurateImage *imageAccurate2_small;
+	
+	AccurateImage *imageAccurate1_medium;
+	AccurateImage *imageAccurate2_medium;
+	
+	AccurateImage *imageAccurate1_large;
+	AccurateImage *imageAccurate2_large;
 
-	AccurateImage *imageAccurate1_small = convertToAccurateImage(image);
-	AccurateImage *imageAccurate2_small = convertToAccurateImage(image);
+	AccurateImage *imageTempTiny;
+	AccurateImage *imageTempSmall;
+	AccurateImage *imageTempMedium;
+	AccurateImage *imageTempLarge;
 
-	AccurateImage *imageAccurate1_medium = convertToAccurateImage(image);
-	AccurateImage *imageAccurate2_medium = convertToAccurateImage(image);
-
-	AccurateImage *imageAccurate1_large = convertToAccurateImage(image);
-	AccurateImage *imageAccurate2_large = convertToAccurateImage(image);
-
+	
 	#pragma omp parallel sections
 	{
 		#pragma omp section
 		{ 
+			imageAccurate1_tiny = convertToAccurateImage(image);
+			imageAccurate2_tiny = convertToAccurateImage(image);
+
+			imageTempTiny = (AccurateImage *)malloc(sizeof(AccurateImage));
+			imageTempTiny->data = (AccuratePixel*)malloc(imageAccurate1_tiny->x * imageAccurate1_tiny->y * sizeof(AccuratePixel));
+
 			// Process the tiny case:
 			// removed redundant iterations since we process all colors at the same time
-			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
-			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
-			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
-			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, 2);
-			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, 2);
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, imageTempTiny, 2);
+			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, imageTempTiny, 2);
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, imageTempTiny, 2);
+			blurIteration(imageAccurate1_tiny, imageAccurate2_tiny, imageTempTiny, 2);
+			blurIteration(imageAccurate2_tiny, imageAccurate1_tiny, imageTempTiny, 2);
+
+			free(imageTempTiny->data);
+			free(imageTempTiny);
 		}
 
 		#pragma omp section
 		{ 			
+			imageAccurate1_small = convertToAccurateImage(image);
+			imageAccurate2_small = convertToAccurateImage(image);
+
+			imageTempSmall = (AccurateImage *)malloc(sizeof(AccurateImage));
+			imageTempSmall->data = (AccuratePixel*)malloc(imageAccurate1_small->x * imageAccurate1_small->y * sizeof(AccuratePixel));
+
 			// Process the small case:
-			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
-			blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
-			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
-			blurIteration(imageAccurate1_small, imageAccurate2_small, 3);
-			blurIteration(imageAccurate2_small, imageAccurate1_small, 3);
+			blurIteration(imageAccurate2_small, imageAccurate1_small, imageTempSmall, 3);
+			blurIteration(imageAccurate1_small, imageAccurate2_small, imageTempSmall, 3);
+			blurIteration(imageAccurate2_small, imageAccurate1_small, imageTempSmall, 3);
+			blurIteration(imageAccurate1_small, imageAccurate2_small, imageTempSmall, 3);
+			blurIteration(imageAccurate2_small, imageAccurate1_small, imageTempSmall, 3);
 		
 			// an intermediate step can be saved for debugging like this
 		//    writePPM("imageAccurate2_tiny.ppm", convertToPPPMImage(imageAccurate2_tiny));
+
+			free(imageTempSmall->data);
+			free(imageTempSmall);
 		}
 
 		#pragma omp section
 		{ 			
+			imageAccurate1_medium = convertToAccurateImage(image);
+			imageAccurate2_medium = convertToAccurateImage(image);
+
+			imageTempMedium = (AccurateImage *)malloc(sizeof(AccurateImage));
+			imageTempMedium->data = (AccuratePixel*)malloc(imageAccurate1_medium->x * imageAccurate1_medium->y * sizeof(AccuratePixel));
+
 			// Process the medium case:
-			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
-			blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
-			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
-			blurIteration(imageAccurate1_medium, imageAccurate2_medium, 5);
-			blurIteration(imageAccurate2_medium, imageAccurate1_medium, 5);
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, imageTempMedium, 5);
+			blurIteration(imageAccurate1_medium, imageAccurate2_medium, imageTempMedium, 5);
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, imageTempMedium, 5);
+			blurIteration(imageAccurate1_medium, imageAccurate2_medium, imageTempMedium, 5);
+			blurIteration(imageAccurate2_medium, imageAccurate1_medium, imageTempMedium, 5);
+
+			free(imageTempMedium->data);
+			free(imageTempMedium);
+
 		}
 
 		#pragma omp section
 		{ 			
+			imageAccurate1_large = convertToAccurateImage(image);
+			imageAccurate2_large = convertToAccurateImage(image);
+
+			imageTempLarge = (AccurateImage *)malloc(sizeof(AccurateImage));
+			imageTempLarge->data = (AccuratePixel*)malloc(imageAccurate1_large->x * imageAccurate1_large->y * sizeof(AccuratePixel));
+
 			// Do each color channel
-			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
-			blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
-			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
-			blurIteration(imageAccurate1_large, imageAccurate2_large, 8);
-			blurIteration(imageAccurate2_large, imageAccurate1_large, 8);
+			blurIteration(imageAccurate2_large, imageAccurate1_large, imageTempLarge, 8);
+			blurIteration(imageAccurate1_large, imageAccurate2_large, imageTempLarge, 8);
+			blurIteration(imageAccurate2_large, imageAccurate1_large, imageTempLarge, 8);
+			blurIteration(imageAccurate1_large, imageAccurate2_large, imageTempLarge, 8);
+			blurIteration(imageAccurate2_large, imageAccurate1_large, imageTempLarge, 8);
+
+			free(imageTempLarge->data);
+			free(imageTempLarge);
 		}
 	}
 	
