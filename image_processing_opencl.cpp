@@ -193,7 +193,8 @@ public:
         }
 
         // create kernel
-        naive_kernel = Kernel(program, "naive_kernel");
+        horizontal_kernel = Kernel(program, "horizontal_kernel");
+        vertical_kernel = Kernel(program, "vertical_kernel");
     }
     AccurateImage * blur(AccurateImage *image, int size){
         // perform blur operation
@@ -236,7 +237,8 @@ private:
     Context context;
     CommandQueue queue;
     Program program;
-    Kernel naive_kernel;
+    Kernel horizontal_kernel;
+    Kernel vertical_kernel;
     std::vector<pair<string, Event>> events;
     void printEvent(string s, Event& evt){
 
@@ -254,15 +256,34 @@ private:
     void blurIteration(AccurateImage *image, Buffer& src, Buffer& dst, cl_int size){
         // enqueue the OpenCL kernel naive_kernel
 
+        std::size_t bufferSize = image->x * image->y * sizeof(AccuratePixel);
+        Buffer tmp(context, CL_MEM_READ_WRITE|CL_MEM_ALLOC_HOST_PTR, bufferSize);
+
         // create Event for profiling
-        events.emplace_back(make_pair("naive_kernel", Event()));
+        events.emplace_back(make_pair("horizontal_kernel", Event()));
         // set call arguments
-        naive_kernel.setArg(0, src);
-        naive_kernel.setArg(1, dst);
-        naive_kernel.setArg(2, size);
+        horizontal_kernel.setArg(0, src);
+        horizontal_kernel.setArg(1, tmp);
+        horizontal_kernel.setArg(2, size);
         // call 2D kernel
         queue.enqueueNDRangeKernel(
-                naive_kernel, // kernel to queue
+                horizontal_kernel, // kernel to queue
+                NullRange, // use no offset
+                NDRange(image->x, image->y), // 2D kernel
+                NullRange, // use no local range
+                nullptr, // we use the queue in sequential mode so we don't have to specify Events that need to finish before
+                &events.back().second // Event to use for profiling
+        );
+
+        // create Event for profiling
+        events.emplace_back(make_pair("vertical_kernel", Event()));
+        // set call arguments
+        vertical_kernel.setArg(0, tmp);
+        vertical_kernel.setArg(1, dst);
+        vertical_kernel.setArg(2, size);
+        // call 2D kernel
+        queue.enqueueNDRangeKernel(
+                vertical_kernel, // kernel to queue
                 NullRange, // use no offset
                 NDRange(image->x, image->y), // 2D kernel
                 NullRange, // use no local range
