@@ -10,7 +10,7 @@
 // http://7-themes.com/6971875-funny-flowers-pictures.html
 
 typedef struct {
-     double red,green,blue;
+     float red,green,blue;
 } AccuratePixel;
 
 typedef struct {
@@ -25,9 +25,9 @@ AccurateImage *convertToAccurateImage(PPMImage *image) {
 	imageAccurate = (AccurateImage *)malloc(sizeof(AccurateImage));
 	imageAccurate->data = (AccuratePixel*)malloc(image->x * image->y * sizeof(AccuratePixel));
 	for(int i = 0; i < image->x * image->y; i++) {
-		imageAccurate->data[i].red   = (double) image->data[i].red;
-		imageAccurate->data[i].green = (double) image->data[i].green;
-		imageAccurate->data[i].blue  = (double) image->data[i].blue;
+		imageAccurate->data[i].red   = (float) image->data[i].red;
+		imageAccurate->data[i].green = (float) image->data[i].green;
+		imageAccurate->data[i].blue  = (float) image->data[i].blue;
 	}
 	imageAccurate->x = image->x;
 	imageAccurate->y = image->y;
@@ -61,9 +61,9 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 	for(int senterY = 0; senterY < imageIn->y; senterY++) {
 
 		// added sum for each colour
-		double sumRed = 0;
-		double sumGreen = 0;
-		double sumBlue = 0;
+		float sumRed = 0;
+		float sumGreen = 0;
+		float sumBlue = 0;
 
 		int countIncluded = 0;
 	
@@ -107,9 +107,9 @@ void blurIterationHorizontal(AccurateImage *imageOut, AccurateImage *imageIn, in
 			}
 
 			// Now we compute the final value
-			double valueRed = sumRed / countIncluded;
-			double valueGreen = sumGreen / countIncluded;
-			double valueBlue = sumBlue / countIncluded;
+			float valueRed = sumRed / countIncluded;
+			float valueGreen = sumGreen / countIncluded;
+			float valueBlue = sumBlue / countIncluded;
 			
 			
 			// Update the output image
@@ -133,9 +133,9 @@ void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int 
 	for(int senterX = 0; senterX < imageIn->x; senterX++) {
 
 		// added sum for each colour
-		double sumRed = 0;
-		double sumGreen = 0;
-		double sumBlue = 0;
+		float sumRed = 0;
+		float sumGreen = 0;
+		float sumBlue = 0;
 	
 		int countIncluded = 0;
 		
@@ -182,9 +182,9 @@ void blurIterationVertical(AccurateImage *imageOut, AccurateImage *imageIn, int 
 			}
 
 			// Now we compute the final value
-			double valueRed = sumRed / countIncluded;
-			double valueGreen = sumGreen / countIncluded;
-			double valueBlue = sumBlue / countIncluded;
+			float valueRed = sumRed / countIncluded;
+			float valueGreen = sumGreen / countIncluded;
+			float valueBlue = sumBlue / countIncluded;
 			
 			
 			// Update the output image
@@ -219,7 +219,7 @@ PPMImage * imageDifference(AccurateImage *imageInSmall, AccurateImage *imageInLa
 	imageOut->y = imageInSmall->y;
 
 	for(int i = 0; i < imageInSmall->x * imageInSmall->y; i++) {
-		double value = (imageInLarge->data[i].red - imageInSmall->data[i].red);
+		float value = (imageInLarge->data[i].red - imageInSmall->data[i].red);
 		if(value > 255)
 			imageOut->data[i].red = 255;
 		else if (value < -1.0) {
